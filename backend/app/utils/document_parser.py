@@ -9,6 +9,7 @@ import pytesseract
 from PIL import Image
 import pdf2image
 from app.schemas.document import NormalizedDocument
+from app.utils.cache_manager import document_cache
 import logging
 
 logger = logging.getLogger(__name__)
@@ -224,6 +225,12 @@ class EnhancedDocumentParser:
         """
         Parse a document and return normalized content using enhanced methods
         """
+        # Check cache first
+        cached_result = await document_cache.get_parsed_document(document_id)
+        if cached_result:
+            logger.info(f"Retrieved parsed document from cache: {document_id}")
+            return NormalizedDocument(**cached_result)
+        
         import fitz  # PyMuPDF
         from docx import Document as DocxDocument
         import pytesseract
@@ -255,11 +262,16 @@ class EnhancedDocumentParser:
         metadata["page_count"] = len([s for s in sections if s["position"]["page"]])
         metadata["word_count"] = sum(len(s["content"].split()) for s in sections if s["type"] == "paragraph")
         
-        return NormalizedDocument(
+        result = NormalizedDocument(
             document_id=document_id,
             metadata=metadata,
             sections=sections
         )
+        
+        # Cache the result
+        await document_cache.set_parsed_document(document_id, result.dict())
+        
+        return result
     
     async def _extract_metadata(self, file_path: str, document_id: str) -> Dict[str, Any]:
         """
