@@ -4,6 +4,7 @@ from typing import Dict, List, Any, Optional
 from app.schemas.document import NormalizedDocument
 from app.models.study_guide import StudyGuideContent, SummarySection, Question, Concept
 from app.utils.content_analyzer import content_analyzer
+from app.utils.validation import quality_assurance
 from langchain_anthropic import ChatAnthropic
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
