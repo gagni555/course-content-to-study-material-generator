@@ -203,7 +203,7 @@ class ContentAnalyzer:
         Find examples related to the concept in the document
         """
         examples = []
-        all_content = ".join([section["content"] for section in normalized_document.sections])
+        all_content = " ".join([section["content"] for section in normalized_document.sections])
         
         # Look for example indicators near the concept
         for indicator in self.example_indicators:
