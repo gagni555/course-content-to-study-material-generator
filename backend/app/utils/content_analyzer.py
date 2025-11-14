@@ -46,6 +46,13 @@ class ContentAnalyzer:
         """
         Analyze the normalized document content to extract concepts and relationships
         """
+        # Check cache first using document ID
+        if hasattr(normalized_document, 'document_id'):
+            cached_result = await document_cache.get_analyzed_content(normalized_document.document_id)
+            if cached_result:
+                logger.info(f"Retrieved analyzed content from cache: {normalized_document.document_id}")
+                return cached_result
+        
         try:
             # Extract concepts from the document
             concepts = await self._extract_concepts(normalized_document)
@@ -66,6 +73,10 @@ class ContentAnalyzer:
                 "concept_map": concept_map,
                 "content_chunks": await self._chunk_content(normalized_document)
             }
+            
+            # Cache the result if we have a document ID
+            if hasattr(normalized_document, 'document_id'):
+                await document_cache.set_analyzed_content(normalized_document.document_id, analysis_result)
             
             return analysis_result
         except Exception as e:

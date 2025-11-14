@@ -5,6 +5,7 @@ from app.schemas.document import NormalizedDocument
 from app.models.study_guide import StudyGuideContent, SummarySection, Question, Concept
 from app.utils.content_analyzer import content_analyzer
 from app.utils.validation import quality_assurance
+from app.utils.cache_manager import document_cache
 from langchain_anthropic import ChatAnthropic
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -40,8 +41,8 @@ class StudyGuideGenerator:
             logger.warning("No LLM API key found. Using mock responses for testing.")
     
     async def generate_study_guide(
-        self, 
-        normalized_document: NormalizedDocument, 
+        self,
+        normalized_document: NormalizedDocument,
         detail_level: str = "standard",
         include_questions: bool = True,
         include_concept_map: bool = True,
@@ -50,14 +51,21 @@ class StudyGuideGenerator:
         """
         Generate a complete study guide from the normalized document
         """
+        # Check cache first using document ID and detail level
+        if hasattr(normalized_document, 'document_id'):
+            cached_result = await document_cache.get_study_guide(normalized_document.document_id, detail_level)
+            if cached_result:
+                logger.info(f"Retrieved study guide from cache: {normalized_document.document_id}, detail_level: {detail_level}")
+                return StudyGuideContent(**cached_result)
+        
         try:
             # Analyze the content to extract concepts and relationships
             analysis_result = await content_analyzer.analyze_content(normalized_document)
             
             # Generate summaries based on Bloom's Taxonomy
             summary_sections = await self._generate_summaries(
-                normalized_document, 
-                analysis_result, 
+                normalized_document,
+                analysis_result,
                 detail_level
             )
             
@@ -65,8 +73,8 @@ class StudyGuideGenerator:
             questions = []
             if include_questions:
                 questions = await self._generate_questions(
-                    normalized_document, 
-                    analysis_result, 
+                    normalized_document,
+                    analysis_result,
                     detail_level
                 )
             
@@ -107,6 +115,14 @@ class StudyGuideGenerator:
             logger.info(f"Study guide validation completed. Score: {validation_results['overall_score']:.2f}")
             if not validation_results['passed']:
                 logger.warning(f"Study guide validation issues: {validation_results['issues']}")
+            
+            # Cache the result if we have a document ID
+            if hasattr(normalized_document, 'document_id'):
+                await document_cache.set_study_guide(
+                    normalized_document.document_id,
+                    detail_level,
+                    study_guide.dict()
+                )
             
             return study_guide
         except Exception as e:
