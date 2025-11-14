@@ -218,7 +218,8 @@ class ContentAnalyzer:
         
         # Look for example indicators near the concept
         for indicator in self.example_indicators:
-            pattern = rf"({indicator}.*?{re.escape(concept)}|{re.escape(concept)}.*?{indicator})"[:1000]  # Limit pattern length
+            # Create pattern without truncating the regex itself
+            pattern = rf"({indicator}.*?{re.escape(concept)}|{re.escape(concept)}.*?{indicator})"
             matches = re.findall(pattern, all_content, re.IGNORECASE)
             examples.extend([match.strip() for match in matches if len(match.strip()) > 5])
         
