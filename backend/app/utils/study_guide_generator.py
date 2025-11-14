@@ -100,6 +100,14 @@ class StudyGuideGenerator:
                 flashcards=flashcards
             )
             
+            # Validate the generated study guide
+            validation_results = await quality_assurance.validate_study_guide(study_guide, normalized_document)
+            
+            # Log validation results
+            logger.info(f"Study guide validation completed. Score: {validation_results['overall_score']:.2f}")
+            if not validation_results['passed']:
+                logger.warning(f"Study guide validation issues: {validation_results['issues']}")
+            
             return study_guide
         except Exception as e:
             logger.error(f"Error generating study guide: {str(e)}")

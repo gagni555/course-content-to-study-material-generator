@@ -12,6 +12,7 @@ from app.utils.document_parser import document_parser
 from app.utils.content_analyzer import content_analyzer
 from app.utils.study_guide_generator import study_guide_generator
 from app.utils.exporter import exporter
+from app.utils.error_handlers import error_recovery_manager, document_error_handler, api_error_handler
 from app.config import settings
 from app.api.deps import get_current_user
 import asyncio
