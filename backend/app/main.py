@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
+from app.api.v1.endpoints import documents, auth
 
 app = FastAPI(
     title="Course-Content-to-Study-Guide Generator API",
@@ -16,6 +17,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include API routes
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
+app.include_router(documents.router, prefix="/api/v1/documents", tags=["Documents"])
 
 @app.get("/")
 async def root():
